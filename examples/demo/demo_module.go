@@ -4,12 +4,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"errors"
 
 	"github.com/zieckey/dbuf"
 	"github.com/zieckey/simgo"
 )
-
 
 type DemoModule struct {
 	dict *dbuf.DoubleBuffering
@@ -23,11 +21,11 @@ func (m *DemoModule) Initialize() error {
 
 	name := "mydict"
 	fw := simgo.DefaultFramework
-	rc := fw.DoubleBufferingManager.Add(name, "the config data of Dict or the config file path of Dict", newDict)
-	if rc == false {
-		return errors.New("Dict initialize failed")
+	rc := fw.DBufManager.Add(name, "the config data of Dict or the config file path of Dict", newDict)
+	if rc != nil {
+		return fmt.Errorf("Dict initialize failed : %v", rc.Error())
 	}
-	m.dict = fw.DoubleBufferingManager.Get(name)
+	m.dict = fw.DBufManager.Get(name)
 	return nil
 }
 

@@ -23,16 +23,16 @@ var DefaultFramework = &duxFramework
 var duxFramework Framework
 
 type Framework struct {
-    Conf                   *goini.INI
-    ConfigFilePath         string
-    DoubleBufferingManager *dbuf.Manager
-    Router                 *mux.Router
+    Conf           *goini.INI
+    ConfigPath     string
+    DBufManager    *dbuf.Manager
+    Router         *mux.Router
 
-    debug                  bool
-    httpAddr               string                // The http server listen address
-    modules                map[string]Module     // map<module-name, Module>
-    accessLog              bool
-    statusFilePath         string                // The status.html file path
+    debug          bool
+    httpAddr       string                // The http server listen address
+    modules        map[string]Module     // map<module_name, Module>
+    accessLog      bool
+    statusFilePath string                // The status.html file path
 }
 
 func init() {
@@ -57,10 +57,10 @@ func (fw *Framework) Initialize() error {
         flag.Parse()
     }
 
-    fw.DoubleBufferingManager = dbuf.NewManager()
+    fw.DBufManager = dbuf.NewManager()
 
     configFilePath := *ConfPath
-    fw.ConfigFilePath = configFilePath
+    fw.ConfigPath = configFilePath
     ini, err := goini.LoadInheritedINI(configFilePath)
     if err != nil {
         return errors.New("parse INI config file error : " + configFilePath)
@@ -157,7 +157,7 @@ func (fw *Framework) GetPathConfig(section, key string) string {
         println(key + " config is missing in " + section)
         return ""
     }
-    return goini.GetPathByRelativePath(fw.ConfigFilePath, filepath)
+    return goini.GetPathByRelativePath(fw.ConfigPath, filepath)
 }
 
 func (fw *Framework) createPidFile() {
