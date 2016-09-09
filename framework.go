@@ -28,17 +28,16 @@ type Framework struct {
     DoubleBufferingManager *dbuf.Manager
     Router                 *mux.Router
 
-    BufPond                map[string]*sync.Pool // map[buffer_name]pool_pointer, pool's pool is pond.
     debug                  bool
     httpAddr               string                // The http server listen address
     modules                map[string]Module     // map<module-name, Module>
-    accessLogEnable        bool
+    accessLog              bool
     statusFilePath         string                // The status.html file path
 }
 
 func init() {
     duxFramework.modules = make(map[string]Module)
-    duxFramework.accessLogEnable = true
+    duxFramework.accessLog = true
     duxFramework.debug = false
 }
 
@@ -52,30 +51,16 @@ func (fw *Framework) RegisterModule(name string, m Module) error {
     return nil
 }
 
-func (fw *Framework) NewBufPool(poolName string, newObj func() interface{}) (*sync.Pool, error) {
-    if pool, ok := fw.BufPond[poolName]; ok {
-        return pool, errors.New(poolName + " have been exist.")
-    }
-    pool := &sync.Pool{New: newObj}
-    fw.BufPond[poolName] = pool
-    return pool, nil
-
-}
-
 // Initialize 框架初始化，在RegisterModule之后调用
 func (fw *Framework) Initialize() error {
     if !flag.Parsed() {
         flag.Parse()
     }
-    configFilePath := *ConfPath
-    fw.BufPond = make(map[string]*sync.Pool)
-    if configFilePath == "" || !IsExist(configFilePath) {
-        return errors.New("not found the config file " + configFilePath)
-    }
 
-    fw.ConfigFilePath = configFilePath
     fw.DoubleBufferingManager = dbuf.NewManager()
 
+    configFilePath := *ConfPath
+    fw.ConfigFilePath = configFilePath
     ini, err := goini.LoadInheritedINI(configFilePath)
     if err != nil {
         return errors.New("parse INI config file error : " + configFilePath)
@@ -83,6 +68,7 @@ func (fw *Framework) Initialize() error {
     fw.Conf = ini
 
     fw.debug, _ = fw.Conf.SectionGetBool("common", "debug")
+    fw.accessLog, _ = fw.Conf.SectionGetBool("common", "access_log")
 
     httpPort, _ := fw.Conf.SectionGet("common", "http_port")
     if len(httpPort) == 0 {
@@ -101,13 +87,12 @@ func (fw *Framework) Initialize() error {
 
 // Run 会启动 server 进入监听状态
 func (fw *Framework) Run() {
-    fw.createPidFile()
-    defer fw.removePidFile()
 
-    // register internal module
+    // register internal modules
     fw.RegisterModule("monitor", new(MonitorModule))
     fw.RegisterModule("admin", new(AdminModule))
 
+    // register business modules
     for name, module := range fw.modules {
         err := module.Initialize()
         if err != nil {
@@ -122,6 +107,11 @@ func (fw *Framework) Run() {
 
     wg.Add(1)
     go fw.runHTTP(&wg)
+
+    // Create PID file now
+    fw.createPidFile()
+    defer fw.removePidFile()
+
     wg.Wait()
 }
 
@@ -183,11 +173,4 @@ func (fw *Framework) removePidFile() {
     pidpath := fw.GetPathConfig("common", "pid_file")
     os.Remove(pidpath)
     println("remove pid file : ", pidpath)
-}
-
-func IsExist(filename string) bool {
-    if _, err := os.Stat(filename); err == nil {
-        return true
-    }
-    return false
 }

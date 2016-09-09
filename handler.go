@@ -34,12 +34,12 @@ func HandleFunc(path string, f func(http.ResponseWriter, *http.Request), m Modul
 func (h *Handler) serveHTTP(w http.ResponseWriter, r *http.Request) {
     beginTime := time.Now()
     if duxFramework.debug {
-        glog.Infof("<%v> url=[%v]", h.n, r.URL.String())
+        glog.Infof("%v url=[%v]", h.n, r.URL.String())
     }
 
     h.f(w, r)
     costMs := float64(time.Since(beginTime).Nanoseconds()) / 1000000.0
-    if duxFramework.accessLogEnable {
+    if duxFramework.accessLog {
         glog.Warningf("%v\t%v\tcost:%v", r.RemoteAddr, r.URL.String(), costMs)
     }
 }
