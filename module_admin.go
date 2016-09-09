@@ -1,4 +1,4 @@
-package unis
+package simgo
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ type AdminModule struct {
 }
 
 func (m *AdminModule) Initialize() error {
-	duxFramework.Router.HandleFunc("/admin/reload", m.Reload)
+	HandleFunc("/admin/reload", m.Reload, m)
 	return nil
 }
 

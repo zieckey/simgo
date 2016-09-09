@@ -1,4 +1,4 @@
-package unis
+package simgo
 
 import (
     "errors"
@@ -25,7 +25,7 @@ var duxFramework Framework
 type Framework struct {
     Conf                   *goini.INI
     ConfigFilePath         string
-    DoubleBufferingManager *dbuf.DoubleBufferingManager
+    DoubleBufferingManager *dbuf.Manager
     Router                 *mux.Router
 
     BufPond                map[string]*sync.Pool // map[buffer_name]pool_pointer, pool's pool is pond.
@@ -74,7 +74,7 @@ func (fw *Framework) Initialize() error {
     }
 
     fw.ConfigFilePath = configFilePath
-    fw.DoubleBufferingManager = dbuf.NewDoubleBufferingManager()
+    fw.DoubleBufferingManager = dbuf.NewManager()
 
     ini, err := goini.LoadInheritedINI(configFilePath)
     if err != nil {
@@ -123,12 +123,6 @@ func (fw *Framework) Run() {
     wg.Add(1)
     go fw.runHTTP(&wg)
     wg.Wait()
-}
-
-// HandleFunc registers a new route with a matcher for the URL path.
-// See Route.Path() and Route.HandlerFunc().
-func HandleFunc(path string, f func(http.ResponseWriter, *http.Request)) *mux.Route {
-    return duxFramework.Router.HandleFunc(path, f)
 }
 
 func (fw *Framework) runHTTP(wg *sync.WaitGroup) {

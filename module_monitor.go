@@ -1,4 +1,4 @@
-package unis
+package simgo
 
 import (
     "fmt"
@@ -23,8 +23,8 @@ type MonitorModule struct {
 }
 
 func (m *MonitorModule) Initialize() error {
-    duxFramework.Router.HandleFunc("/status.html", m.Status).Methods("GET")
-    duxFramework.Router.HandleFunc("/qpoller/status.html", m.Status).Methods("GET")
+    HandleFunc("/status.html", m.Status, m).Methods("GET")
+    HandleFunc("/qpoller/status.html", m.Status, m).Methods("GET")
     return nil
 }
 

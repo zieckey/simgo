@@ -17,12 +17,12 @@ type DemoModule struct {
 
 func (m *DemoModule) Initialize() error {
 	println("DemoModule initializing ...")
-	unis.HandleFunc("/demoproxy", m.Proxy).Methods("POST").Queries("u", "")
-	unis.HandleFunc("/demoecho", m.Echo).Methods("POST")
-	unis.HandleFunc("/dict", m.SearchDict).Methods("GET")
+    simgo.HandleFunc("/demoproxy", m.Proxy, m).Methods("POST").Queries("u", "")
+    simgo.HandleFunc("/demoecho", m.Echo, m).Methods("POST")
+    simgo.HandleFunc("/dict", m.SearchDict, m).Methods("GET")
 
 	name := "mydict"
-	fw := unis.DefaultFramework
+	fw := simgo.DefaultFramework
 	rc := fw.DoubleBufferingManager.Add(name, "the config data of Dict or the config file path of Dict", newDict)
 	if rc == false {
 		return errors.New("Dict initialize failed")
@@ -93,7 +93,7 @@ type Dict struct {
 	//业务自己的其他更复杂的数据结构
 }
 
-func newDict() dbuf.DoubleBufferingTarget {
+func newDict() dbuf.Target {
 	d := new(Dict)
 	return d
 }

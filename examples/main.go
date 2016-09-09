@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/zieckey/simgo"
-	"github.com/zieckey/simgo/sampleapp/demo"
+	"github.com/zieckey/simgo/examples/demo"
 )
 
 /*
@@ -14,7 +14,7 @@ import (
 */
 
 func main() {
-	fw := unis.DefaultFramework
+	fw := simgo.DefaultFramework
 	fw.RegisterModule("demoproxy", new(demo.DemoModule))
 	err := fw.Initialize()
 	if err != nil {

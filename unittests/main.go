@@ -1,17 +1,14 @@
 package main
 
 import (
-	"bytes"
-	"encoding/base64"
 	"flag"
-	"golib/cgo/qhsec"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"os"
 	"time"
+
     "github.com/zieckey/simgo"
-    "github.com/zieckey/simgo/sampleapp/demo"
+    "github.com/zieckey/simgo/examples/demo"
 )
 
 /*
@@ -28,7 +25,7 @@ type ExitModule struct{}
 
 func (m *ExitModule) Initialize() error {
 	println("ExitModule initializing ...")
-	unis.HandleFunc("/exit", m.Exit).Methods("GET")
+	simgo.HandleFunc("/exit", m.Exit, m).Methods("GET")
 	return nil
 }
 
@@ -45,9 +42,9 @@ var demoModule = new(demo.DemoModule)
 
 func main() {
 	// reset the default value of ConfPath
-	flag.StringVar(unis.ConfPath, "ConfPath", "../conf/ut.ini", "The config file of unit test")
+	flag.StringVar(simgo.ConfPath, "ConfPath", "../conf/ut.ini", "The config file of unit test")
 
-	fw := unis.DefaultFramework
+	fw := simgo.DefaultFramework
 	fw.RegisterModule("ExitModule", new(ExitModule))
 	fw.RegisterModule("demoproxy", demoModule)
 	err := fw.Initialize()
