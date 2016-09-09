@@ -78,7 +78,7 @@ func (fw *Framework) Initialize() error {
         fw.httpAddr = fmt.Sprintf(":%v", httpPort)
     }
 
-    fw.statusFilePath = fw.GetPathConfig("common", "monitor_status_file_path")
+    fw.statusFilePath = fw.getPathConfig("common", "monitor_status_file_path")
 
     fw.Router = mux.NewRouter()
 
@@ -123,8 +123,6 @@ func (fw *Framework) runHTTP(wg *sync.WaitGroup) {
 
 func (fw *Framework) watchSignal(wg *sync.WaitGroup) {
     // Set up channel on which to send signal notifications.
-    // We must use a buffered channel or risk missing the signal
-    // if we're not ready to receive when the signal is sent.
     c := make(chan os.Signal, 1)
     signal.Notify(c)
 
@@ -135,7 +133,12 @@ func (fw *Framework) watchSignal(wg *sync.WaitGroup) {
             s := <-c
             glog.Errorf("Got signal %v", s)
             if s == syscall.SIGHUP || s == syscall.SIGINT || s == syscall.SIGTERM {
-                // TODO
+                for name, module := range fw.modules {
+                    err := module.Uninitialize()
+                    if err != nil {
+                        glog.Errorf("%v module Uninitialize failed : %v", name, err.Error())
+                    }
+                }
             }
         }
     }()
@@ -143,15 +146,15 @@ func (fw *Framework) watchSignal(wg *sync.WaitGroup) {
 
 // GetPathConfig 获取一个路径配置项的相对路径（相对于 ConfPath 而言）
 // e.g. :
-// 		ConfPath = /home/unis.conf/app.conf
+// 		ConfPath = /home/simgo/conf/app.ini
 //
 //	and the app.conf has a config item as below :
 //  	[business]
 //		qlog_conf = qlog.conf
 //
 // and then the GetPathConfig("business", "qlog_conf") will
-// return /home/unis.conf/qlog.conf
-func (fw *Framework) GetPathConfig(section, key string) string {
+// return /home/simgo/conf/qlog.conf
+func (fw *Framework) getPathConfig(section, key string) string {
     filepath, ok := fw.Conf.SectionGet(section, key)
     if !ok {
         println(key + " config is missing in " + section)
@@ -161,16 +164,16 @@ func (fw *Framework) GetPathConfig(section, key string) string {
 }
 
 func (fw *Framework) createPidFile() {
-    pidpath := fw.GetPathConfig("common", "pid_file")
+    pidPath := fw.getPathConfig("common", "pid_file")
     pid := os.Getpid()
     pidString := strconv.Itoa(pid)
-    if err := ioutil.WriteFile(pidpath, []byte(pidString), 0777); err != nil {
-        panic("Create pid file failed : " + pidpath)
+    if err := ioutil.WriteFile(pidPath, []byte(pidString), 0777); err != nil {
+        panic("Create pid file failed : " + pidPath)
     }
 }
 
 func (fw *Framework) removePidFile() {
-    pidpath := fw.GetPathConfig("common", "pid_file")
-    os.Remove(pidpath)
-    println("remove pid file : ", pidpath)
+    pidPath := fw.getPathConfig("common", "pid_file")
+    os.Remove(pidPath)
+    println("remove pid file : ", pidPath)
 }
