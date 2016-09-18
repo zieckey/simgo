@@ -139,7 +139,9 @@ func (fw *Framework) runHTTP(wg *sync.WaitGroup) {
         ReadTimeout: fw.ReadTimeout,
         WriteTimeout: fw.WriteTimeout,
     }
-    server.ListenAndServe()
+    if err := server.ListenAndServe(); err != nil {
+        glog.Errorf("Run HTTP server failed : %v", err.Error())
+    }
 }
 
 func (fw *Framework) watchSignal(wg *sync.WaitGroup) {
@@ -188,9 +190,10 @@ func (fw *Framework) createPidFile() {
     pidPath := fw.getPathConfig("common", "pid_file")
     pid := os.Getpid()
     pidString := strconv.Itoa(pid)
-    if err := ioutil.WriteFile(pidPath, []byte(pidString), 0777); err != nil {
+    if err := ioutil.WriteFile(pidPath, []byte(pidString), 0644); err != nil {
         panic("Create pid file failed : " + pidPath)
     }
+    glog.Infof("Create pid file : %v", pidPath)
 }
 
 func (fw *Framework) removePidFile() {
