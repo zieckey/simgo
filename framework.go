@@ -16,6 +16,7 @@ import (
     "github.com/gorilla/mux"
     "github.com/zieckey/dbuf"
     "github.com/zieckey/goini"
+    "time"
 )
 
 // The default unis.instance
@@ -27,12 +28,14 @@ type Framework struct {
     ConfigPath     string
     DBufManager    *dbuf.Manager
     Router         *mux.Router
+    ReadTimeout    time.Duration
+    WriteTimeout   time.Duration
 
     debug          bool
-    httpAddr       string                // The http server listen address
-    modules        map[string]Module     // map<module_name, Module>
+    httpAddr       string            // The http server listen address
+    modules        map[string]Module // map<module_name, Module>
     accessLog      bool
-    statusFilePath string                // The status.html file path
+    statusFilePath string            // The status.html file path
 }
 
 func init() {
@@ -80,6 +83,18 @@ func (fw *Framework) Initialize() error {
 
     fw.statusFilePath = fw.getPathConfig("common", "monitor_status_file_path")
 
+    timeout, _ := fw.Conf.SectionGetInt("common", "http_read_timeout_ms")
+    if timeout < 1 {
+        timeout = 100
+    }
+    fw.ReadTimeout = time.Duration(timeout) * time.Millisecond
+
+    timeout, _ = fw.Conf.SectionGetInt("common", "http_write_timeout_ms")
+    if timeout < 1 {
+        timeout = 100
+    }
+    fw.WriteTimeout = time.Duration(timeout) * time.Millisecond
+
     fw.Router = mux.NewRouter()
 
     return nil
@@ -118,7 +133,13 @@ func (fw *Framework) Run() {
 func (fw *Framework) runHTTP(wg *sync.WaitGroup) {
     defer wg.Done()
     glog.Infof("Running http service at %v", fw.httpAddr)
-    http.ListenAndServe(fw.httpAddr, fw.Router)
+    server := &http.Server{
+        Addr: fw.httpAddr,
+        Handler: fw.Router,
+        ReadTimeout: fw.ReadTimeout,
+        WriteTimeout: fw.WriteTimeout,
+    }
+    server.ListenAndServe()
 }
 
 func (fw *Framework) watchSignal(wg *sync.WaitGroup) {
