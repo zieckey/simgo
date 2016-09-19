@@ -162,6 +162,7 @@ func (fw *Framework) watchSignal(wg *sync.WaitGroup) {
                         glog.Errorf("%v module Uninitialize failed : %v", name, err.Error())
                     }
                 }
+                break
             }
         }
     }()
