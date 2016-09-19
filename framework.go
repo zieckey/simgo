@@ -135,7 +135,7 @@ func (fw *Framework) Run() {
 
 func (fw *Framework) runHTTP(wg *sync.WaitGroup) {
     defer wg.Done()
-    glog.Infof("Running http service at %v", fw.httpAddr)
+    glog.Warningf("Running http service at %v", fw.httpAddr)
     fw.server = &http.Server{
         Addr: fw.httpAddr,
         Handler: fw.Router,
