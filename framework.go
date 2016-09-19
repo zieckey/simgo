@@ -36,6 +36,7 @@ type Framework struct {
     modules        map[string]Module // map<module_name, Module>
     accessLog      bool
     statusFilePath string            // The status.html file path
+    server         *http.Server
 }
 
 func init() {
@@ -118,6 +119,8 @@ func (fw *Framework) Run() {
     }
 
     var wg sync.WaitGroup
+
+    wg.Add(1)
     fw.watchSignal(&wg)
 
     wg.Add(1)
@@ -133,18 +136,20 @@ func (fw *Framework) Run() {
 func (fw *Framework) runHTTP(wg *sync.WaitGroup) {
     defer wg.Done()
     glog.Infof("Running http service at %v", fw.httpAddr)
-    server := &http.Server{
+    fw.server = &http.Server{
         Addr: fw.httpAddr,
         Handler: fw.Router,
         ReadTimeout: fw.ReadTimeout,
         WriteTimeout: fw.WriteTimeout,
     }
-    if err := server.ListenAndServe(); err != nil {
+    if err := fw.server.ListenAndServe(); err != nil {
         glog.Errorf("Run HTTP server failed : %v", err.Error())
     }
 }
 
 func (fw *Framework) watchSignal(wg *sync.WaitGroup) {
+    defer wg.Done()
+
     // Set up channel on which to send signal notifications.
     c := make(chan os.Signal, 1)
     signal.Notify(c)
@@ -162,7 +167,8 @@ func (fw *Framework) watchSignal(wg *sync.WaitGroup) {
                         glog.Errorf("%v module Uninitialize failed : %v", name, err.Error())
                     }
                 }
-                break
+                signal.Stop(c)
+                os.Exit(0) // TODO how to stop HTTP Server and exit gracefully
             }
         }
     }()
