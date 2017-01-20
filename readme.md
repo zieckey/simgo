@@ -61,10 +61,14 @@ func main() {
 }
 ```
 
+Build it and run it with the default config file `github.com/zieckey/simgo/conf/app.ini`
+
 	$ go build
-	$ ./echo
+	$ ls ../
+	simgo echo ...
+	$ ./echo -f ../simgo/conf/app.ini
 
 In another console:
 
-	$ $ curl http://127.0.0.1:9360/echo -d XXX
+	$ curl http://127.0.0.1:9360/echo -d XXX
 	XXX
