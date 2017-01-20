@@ -68,7 +68,7 @@ Build it and run it with the default config file `github.com/zieckey/simgo/conf/
 	simgo echo ...
 	$ ./echo -f ../simgo/conf/app.ini
 
-In another console:
+In another console, we can use `curl` to test it:
 
 	$ curl http://127.0.0.1:9360/echo -d XXX
 	XXX
